@@ -25,7 +25,7 @@ app.post("/chat", async (req, res) => {
     if (!message) return res.status(400).json({ reply: "Нет сообщения" });
 
     // Попробуем получить модель максимально простым способом
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "'gemini-pro" });
 
     const result = await model.generateContent(message);
     const text = result.response.text();
