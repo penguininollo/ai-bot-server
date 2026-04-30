@@ -1,45 +1,61 @@
 const express = require("express");
 const cors = require("cors");
-const OpenAI = require("openai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const app = express();
+
+// Вставь свой API ключ здесь (начинается на AIza...)
+const GEMINI_API_KEY = "AIzaSyAN2ISegomczju1EUiwq9hzGAOWkJgfcds";
+
+// Настройка Gemini
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+
+// Настраиваем модель (flash — самая быстрая и дешевая)
+const model = genAI.getGenerativeModel({ 
+  model: "gemini-1.5-flash",
+  systemInstruction: "Ты полезный ассистент." // Твоя системная роль
+});
 
 app.use(cors());
 app.use(express.json());
 
-// ❗ ВСТАВЛЕН КЛЮЧ НАПРЯМУЮ (НЕ ДЛЯ ПРОДАКШЕНА)
-const client = new OpenAI({
-  apiKey: "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"
-});
-
+// Проверка работы сервера
 app.get("/", (req, res) => {
-  res.send("OK");
+  res.send("Gemini AI Server is running");
 });
 
+// ЧАТ-эндпоинт
 app.post("/chat", async (req, res) => {
   try {
-    const message = req.body.message;
+    const { message } = req.body;
 
-    const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "Ты полезный ассистент" },
-        { role: "user", content: message }
-      ]
-    });
+    if (!message) {
+      return res.json({ reply: "Нет сообщения" });
+    }
 
+    // Запрос к нейросети
+    const result = await model.generateContent(message);
+    const response = await result.response;
+    const text = response.text();
+
+    // Отправляем ответ фронтенду
     res.json({
-      reply: response.choices[0].message.content
+      reply: text || "Пустой ответ от Gemini"
     });
 
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ reply: "error" });
+  } catch (error) {
+    console.error("GEMINI ERROR:", error);
+
+    // Если ключ неверный или ошибка сервера
+    res.json({
+      reply: "Ошибка Gemini: проверьте ключ или соединение"
+    });
   }
 });
 
+// Порт для запуска (для Render или локально)
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log("Server running on " + PORT);
+  console.log("Server running on port " + PORT);
 });
