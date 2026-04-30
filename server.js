@@ -1,41 +1,45 @@
 const express = require("express");
 const cors = require("cors");
+const OpenAI = require("openai");
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-// 👉 ВСТАВЬ СЮДА СВОЙ API КЛЮЧ
-const API_KEY = "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";
+// ❗ ВСТАВЛЕН КЛЮЧ НАПРЯМУЮ (НЕ ДЛЯ ПРОДАКШЕНА)
+const client = new OpenAI({
+  apiKey: "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"
+});
+
+app.get("/", (req, res) => {
+  res.send("OK");
+});
 
 app.post("/chat", async (req, res) => {
-  const message = req.body.message;
-
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: message }] }]
-        })
-      }
-    );
+    const message = req.body.message;
 
-    const data = await response.json();
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "Ты полезный ассистент" },
+        { role: "user", content: message }
+      ]
+    });
 
-    const reply =
-      data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "Нет ответа";
-
-    res.json({ reply });
+    res.json({
+      reply: response.choices[0].message.content
+    });
 
   } catch (e) {
-    res.json({ reply: "Ошибка сервера 😢" });
+    console.error(e);
+    res.status(500).json({ reply: "error" });
   }
 });
 
-app.listen(3000, () => {
-  console.log("Server started on http://localhost:3000");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Server running on " + PORT);
 });
