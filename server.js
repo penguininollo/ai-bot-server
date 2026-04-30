@@ -10,7 +10,7 @@ const GEMINI_API_KEY = "AIzaSyAN2ISegomczju1EUiwq9hzGAOWkJgfcds";
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ 
-  model: "gemini-1.5-flash",
+  model: "models/gemini-1.5-flash",
   systemInstruction: "Ты полезный ассистент." 
 });
 
